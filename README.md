@@ -14,6 +14,26 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>.
 
+## Deploying to GitHub Pages
+
+The workflow in `.github/workflows/deploy.yml` publishes the game every time you push to `main`.
+
+One-time setup:
+
+1. Push this repository to GitHub.
+2. On GitHub, open the repository's **Settings**, then **Pages**.
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+
+After that, each push to `main` does three things:
+
+1. It syntax-checks every JavaScript file. If one is broken, nothing gets published.
+2. It copies `index.html`, `css/` and `js/` into a clean folder.
+3. It publishes that folder to GitHub Pages.
+
+You can watch each run on the **Actions** tab. To redeploy without pushing, open the workflow there and click **Run workflow**.
+
+The site will be at `https://<your-username>.github.io/<repository-name>/`.
+
 ## What's inside
 
 - **Three acts:** Gulf Coast Sediments, The Salt Dome, and The Pay Zone. Each act has a boss at the bottom.
