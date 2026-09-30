@@ -156,9 +156,9 @@ window.PZ = window.PZ || {};
       <div class="eyebrow">Spud date</div>
       <h1>Pearland, Texas. 5:40 A.M.</h1>
       <div class="intro-text">
-        <p>You used to design wells. Now you design data platforms. Today, somehow, you are doing both.</p>
-        <p>A rig is waiting on the edge of town. Under it lie three layers of trouble: soft sediments, a salt dome, and the pay zone. Every layer has hazards. Some of them are just scared.</p>
-        <p>You can drill through them. Or you can make peace with them. The deck in your truck can do either.</p>
+        <p>You have written code your whole career. A lot of it was for the oil business. You have never once set foot on a rig.</p>
+        <p>Today that changes. A rig is waiting on the edge of town. Under it lie three layers of trouble: soft sediments, a salt dome, and the pay zone. Every layer has hazards. Some of them are just scared.</p>
+        <p>You can drill through them. Or you can make peace with them. The deck of cards in your laptop bag can do either.</p>
         <p>${pet.art} ${U.esc(pet.name)} is already in the passenger seat.</p>
       </div>
       <button class="btn big" onclick="PZ.showMap()">Spud in ↓</button>
@@ -304,7 +304,7 @@ window.PZ = window.PZ || {};
       <div class="eyebrow">Act ${run.act + 1}</div>
       <h1>${act.name}</h1>
       <p class="sub">${run.act === 1 ? 'The bit hits salt. The pressure changes. So do the problems.' : 'Below the salt, the reservoir waits. So do the hardest questions.'}</p>
-      <p class="sub">You rest in the doghouse on the rig floor. <b>+${healed} HP</b>.</p>
+      <p class="sub">You rest in the rig's "doghouse." It turns out that is the crew's shack on the rig floor. Nobody warned you. <b>+${healed} HP</b>.</p>
       <button class="btn big" onclick="PZ.showMap()">Keep drilling ↓</button>
     </div>`;
     PZ.renderTopBar();

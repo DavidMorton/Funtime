@@ -535,7 +535,7 @@ window.PZ = window.PZ || {};
     U.$('#player').innerHTML = `
       <div class="p-art"><span class="hero">👷</span><span class="pet" data-tip="<b>${pet.name}</b><br>${U.esc(pet.text)}">${pet.art}</span>
         ${c.block > 0 ? `<div class="p-block" data-tip="Block absorbs attack damage. Resets at the start of your turn.">🛡️<b>${c.block}</b></div>` : ''}</div>
-      <div class="p-name">${U.esc(run.name)} <small>Wellsite Pilgrim</small></div>
+      <div class="p-name">${U.esc(run.name)} <small>Programmer, Far From His Desk</small></div>
       <div class="bar hp big"><div class="fill" style="width:${hpPct}%"></div><span>❤️ ${Math.max(0, run.hp)}/${run.maxHp}</span></div>
       <div class="statuses">${statusHtml(c.st)}</div>`;
   }
