@@ -319,7 +319,7 @@ window.PZ = window.PZ || {};
       <div class="pool-scene"><div class="water"></div><div class="float">🛟</div><div class="sun">☀️</div></div>
       <div class="eyebrow">Home, for a moment</div>
       <h1>The Backyard Pool</h1>
-      <p class="sub">The water is warm. The dog is asleep on the patio. Choose one thing to do.</p>
+      <p class="sub">The water is warm. ${{ mutt: 'The dog is asleep on the patio.', tabby: 'The cat is judging you from the window.', guinea: 'The guinea pigs are wheeking for lettuce.' }[run.companion] || ''} Choose one thing to do.</p>
       <div class="rest-options">
         <button class="rest-opt" onclick="PZ.restHeal(${healAmt})"><span>🏊</span><h2>Float</h2><p>Heal ${healAmt} HP.</p></button>
         <button class="rest-opt" ${canUp ? '' : 'disabled'} onclick="PZ.restUpgrade()"><span>🎸</span><h2>Practice</h2><p>${PZ.hasRelic('porch') ? 'Your porch chair is too comfortable.' : 'Upgrade a card.'}</p></button>
@@ -665,8 +665,10 @@ window.PZ = window.PZ || {};
       </div>
       ${unlocked ? `<p class="unlock">🌡️ New difficulty unlocked: <b>${PZ.PRESSURE[p.maxPressure].name}</b>. ${U.esc(PZ.PRESSURE[p.maxPressure].desc)}</p>` : ''}
       <p class="hint">Grace = 10 per reconciled foe, 50 per reconciled boss, 100 for reaching the Pay Zone, and 2 per floor.</p>
-      <div class="title-buttons"><button class="btn big" onclick="PZ.showCompanionSelect()">Drill again</button><button class="btn ghost" onclick="PZ.showTitle()">Title</button></div>
+      <div class="title-buttons"><button class="btn big" onclick="PZ.showCompanionSelect()">Drill again</button>
+        <div class="title-row"><button class="btn ghost" onclick="PZ.viewCards(PZ.G.lastDeck || [], 'Your Final Deck')">🃏 Final deck</button><button class="btn ghost" onclick="PZ.showTitle()">Title</button></div></div>
     </div>`;
+    PZ.G.lastDeck = run.deck;
     PZ.G.run = null;
     PZ.renderTopBar();
   };

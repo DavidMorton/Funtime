@@ -26,6 +26,9 @@ Then open <http://localhost:8000>.
 - **Companions:** At the start, pick the Loyal Mutt, the Orange Tabby, or the Guinea Pig Pair.
 - **The local game store:** Buy single cards, open booster packs (with foils), or trade cards in.
 - **The binder:** Every card you find is saved across runs. Try to collect them all.
+- **Snacks:** Kolaches, cold brew, crawfish boil, and other one-use items that help in a pinch.
+- **Hard hat stickers:** 20 achievements to earn across runs. You can see them in the binder.
+- **Pressure levels:** Win a descent to unlock a harder difficulty. There are three levels.
 - **Stories:** a 2 A.M. escalation, a Prairie School house tour, league night with your son, a Commander pod, a hurricane cone, formal night on a cruise, and more.
 - **Music:** Ambient jazz is generated live in the browser. The top bar has buttons to turn the music and sound effects on or off.
 

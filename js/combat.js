@@ -518,7 +518,7 @@ window.PZ = window.PZ || {};
       return `<div class="enemy ${e.state} ${tgt} ${size}" data-euid="${e.uid}" onclick="PZ.clickEnemy('${e.uid}')">
         <div class="intents">${e.state === 'alive' ? intentHtml(intentOf(e), e) + (lenses ? intentHtml(nextIntentOf(e), e, true) : '') : ''}</div>
         <div class="e-art"><span>${e.art}</span>${e.block > 0 ? `<div class="e-block" data-tip="Block: absorbs damage. Harmony ignores it.">🛡️<b>${e.block}</b></div>` : ''}</div>
-        <div class="e-name">${U.esc(e.name)}</div>
+        <div class="e-name" data-tip="${U.esc(PZ.ENEMIES[e.id].flavor || '')}">${U.esc(e.name)}</div>
         <div class="bar hp" data-tip="Health. Bring to 0 to <b>Plug</b> this hazard."><div class="fill" style="width:${hpPct}%"></div><span>❤️ ${Math.max(0, e.hp)}/${e.maxHp}</span></div>
         <div class="bar unrest" data-tip="Unrest. Bring to 0 with Harmony to <b>Reconcile</b>. Reconciled foes can join your deck."><div class="fill" style="width:${urPct}%"></div><span>${moodFace(e)} ${Math.max(0, e.unrest)}/${e.maxUnrest}</span></div>
         <div class="statuses">${statusHtml(e.st)}</div>

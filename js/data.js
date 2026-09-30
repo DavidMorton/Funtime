@@ -309,7 +309,7 @@ window.PZ = window.PZ || {};
     moves: [{ acts: [{ player: { Weak: 2 } }, { junk: 'second_guess', n: 2, to: 'draw' }], label: '"That was sloppy."' }, { acts: [atk(14)] }] });
   enemy('perfectionism', { name: 'Perfectionism', art: '💠', hp: [58, 62], unrest: 38, ally: 'a_perfect', ai: 'cycle',
     moves: [{ acts: [{ block: 18 }, { self: { Torque: 2 } }], label: 'One more revision' }, { acts: [atk(18)] }] });
-  enemy('doubt', { name: 'Creeping Doubt', art: '🌫️', hp: [45, 50], unrest: 30, ally: 'a_doubt', ai: 'cycle',
+  enemy('doubt', { name: 'Creeping Doubt', art: '💭', hp: [45, 50], unrest: 30, ally: 'a_doubt', ai: 'cycle',
     moves: [{ acts: [{ junk: 'second_guess', n: 2, to: 'draw' }, atk(5)] }, { acts: [atk(11), { player: { Exposed: 1 } }] }] });
   enemy('kick', { name: 'Gas Kick', art: '🫧', hp: [52, 56], unrest: 38, ally: 'a_kick', ai: 'cycle',
     moves: [{ acts: [atk(5, 4)] }, { acts: [{ self: { Torque: 3 } }], label: 'Pit gain' }, { acts: [atk(20)] }] });
@@ -321,6 +321,24 @@ window.PZ = window.PZ || {};
     moves: [{ acts: [atk(14, 2)] }, { acts: [{ self: { Torque: 4 } }, { block: 25 }], label: 'Raises the stakes' }, { acts: [atk(40)], label: 'Winner takes all' },
       { acts: [{ junk: 'second_guess', n: 3, to: 'draw' }, { player: { Weak: 2, Exposed: 2 } }], label: 'Sets the rules' }, { acts: [atk(10, 3)] }] });
 
+
+  // Flavor lines shown when hovering an enemy's name
+  const FLAVOR = {
+    mosquito: 'Pearland\'s true state bird.', fire_ants: 'Step on the mound once. Learn forever.',
+    shallow_gas: 'A little pocket of pressure. Nervous, mostly.', stuck_pipe: 'Differential sticking. It just wants to hold on to something.',
+    null_gremlin: 'Lives in the columns nobody documented.', schema_drift: 'Yesterday it was a string. Today it is a struct.',
+    etl_hydra: 'Written in 2009. Nobody knows who owns it. It knows who you are.', hurricane: 'Every August, the cone of uncertainty points at your house.',
+    data_swamp: 'A lake nobody governed. Everything goes in. Nothing comes out clean.',
+    salt_creep: 'Salt flows, slowly, like a glacier with a grudge.', lost_circ: 'All your mud, gone into the formation.',
+    h2s: 'Rotten eggs, then nothing. Respect the monitor.', spreadsheet: 'Forty tabs. Three circular references. One hero.',
+    shadow_it: 'Somebody\'s personal credit card is paying for this.', monolith: 'One giant nightly batch job. It has seen things.',
+    scope_creep: '"While you\'re in there, could you also…"', blowout: 'Every well control class exists because of this.',
+    pressure_wave: 'All the weight of the rock above, pushing back.', inner_critic: 'It sounds like you. It is not the real you.',
+    perfectionism: 'It will be ready after one more pass. It said that last time.', doubt: 'Quiet. Persistent. Easier to face out loud.',
+    kick: 'Pit volume up. Flow check positive. Stay calm.', burnout: 'The fire that burns when you forget to rest.',
+    quarterly: 'It resets every ninety days. So does your heart rate.', finite_game: 'It plays to win. It has never asked why.',
+  };
+  Object.keys(FLAVOR).forEach(id => { if (E[id]) E[id].flavor = FLAVOR[id]; });
   PZ.ENEMIES = E;
 
   // ---------- Acts & Encounters ----------
@@ -462,7 +480,7 @@ window.PZ = window.PZ || {};
     { id: 'verse', title: 'The Hard Verse', art: '📜',
       text: 'You are translating late at night. One Greek word has no clean English match. Every choice loses something.',
       choices: [
-        { label: 'Stay close to the words', desc: 'Upgrade a random card twice over (2 upgrades).', run: a => { a.upgradeRandom(2); return 'Clunky, but honest. You can smooth it later.'; } },
+        { label: 'Stay close to the words', desc: 'Upgrade 2 random cards.', run: a => { a.upgradeRandom(2); return 'Clunky, but honest. You can smooth it later.'; } },
         { label: 'Stay close to the meaning', desc: 'Gain the Interlinear Bible keepsake.', cond: a => !a.hasRelic('interlinear'), run: a => { a.addRelic('interlinear'); return 'Faithful, not wooden. You sleep well.'; } },
         { label: 'Write a footnote', desc: 'Gain a random Hymn card.', run: a => { a.addRandomCard('hymn'); return 'Footnotes: where translators tell the truth.'; } },
       ] },

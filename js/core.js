@@ -200,7 +200,10 @@ window.PZ = window.PZ || {};
       const da = PZ.def(a), db = PZ.def(b);
       return da.fam.localeCompare(db.fam) || da.name.localeCompare(db.name);
     });
-    PZ.modal(`<h2 class="modal-title">${title}</h2>${sub ? `<p class="modal-sub">${sub}</p>` : ''}
+    const fams = {};
+    cards.forEach(c => { const f = PZ.def(c).fam; fams[f] = (fams[f] || 0) + 1; });
+    const famChips = Object.keys(fams).map(f => `<span class="chip fam-${f}">${PZ.FAMILIES[f].name} ${fams[f]}</span>`).join('');
+    PZ.modal(`<h2 class="modal-title">${title}</h2>${sub ? `<p class="modal-sub">${sub}</p>` : ''}${cards.length ? `<div class="fam-chips">${famChips}</div>` : ''}
       <div class="card-grid">${sorted.length ? sorted.map(c => PZ.renderCard(c)).join('') : '<p class="empty">Nothing here.</p>'}</div>`, { cls: 'wide' });
   };
 

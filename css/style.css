@@ -645,3 +645,7 @@ h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: 0.01em; }
   .shop-lower { grid-template-columns: 1fr; }
   .turn-banner { font-size: 34px; }
 }
+
+/* ---------- Deck view chips ---------- */
+.fam-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 8px; }
+.chip.fam-junk { background: var(--junk); color: #fff; }
