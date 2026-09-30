@@ -27,6 +27,18 @@ window.PZ = window.PZ || {};
 
   PZ.profile = store.get('profile', { runs: 0, wins: 0, bestGrace: 0, reconciledTotal: 0, pluggedTotal: 0, infiniteEndings: 0 });
   PZ.saveProfile = () => store.set('profile', PZ.profile);
+  PZ.profile.stickers = PZ.profile.stickers || {};
+  PZ.profile.petWins = PZ.profile.petWins || {};
+  PZ.profile.maxPressure = PZ.profile.maxPressure || 0;
+  PZ.award = id => {
+    const s = PZ.STICKERS[id]; if (!s || PZ.profile.stickers[id]) return;
+    PZ.profile.stickers[id] = new Date().toISOString().slice(0, 10);
+    PZ.saveProfile();
+    setTimeout(() => {
+      PZ.toast(`<span class="sticker-toast">${s.art}</span> Hard hat sticker: <b>${s.name}</b>`, 'sticker-note');
+      if (PZ.audio) PZ.audio.sfx('rare');
+    }, 300);
+  };
   PZ.binder = store.get('binder', {});
   PZ.binderRegister = (id, foil) => {
     const d = PZ.CARDS[id]; if (!d || d.fam === 'junk') return false;
@@ -34,6 +46,12 @@ window.PZ = window.PZ || {};
     const isNew = e.n === 0;
     e.n++; if (foil) e.foil++;
     PZ.binder[id] = e; store.set('binder', PZ.binder);
+    if (isNew) {
+      const total = Object.values(PZ.CARDS).filter(c => c.fam !== 'junk').length;
+      const have = Object.keys(PZ.binder).length;
+      if (have * 2 >= total) PZ.award('binder50');
+      if (have >= total) PZ.award('binder100');
+    }
     return isNew;
   };
 
@@ -79,13 +97,15 @@ window.PZ = window.PZ || {};
     const costHtml = d.cost < 0 || d.unplayable ? '' : `<div class="c-cost ${costCls}">${cost}</div>`;
     const fam = PZ.FAMILIES[d.fam].name;
     const attrs = o.attrs || '';
+    const text = PZ.cardText(inst, o.fx);
+    const textLen = text.replace(/<[^>]+>/g, '').length;
     return `<div class="${cls.join(' ')}" data-uid="${inst.uid}" data-id="${d.id}" ${attrs}>
       <div class="c-frame">
         ${costHtml}
         <div class="c-name">${U.esc(d.name)}${up ? '<span class="plus">+</span>' : ''}</div>
         <div class="c-art"><span>${d.art}</span></div>
         <div class="c-type">${d.type} · ${fam}</div>
-        <div class="c-text">${PZ.cardText(inst, o.fx)}</div>
+        <div class="c-text ${textLen > 88 ? 'txl' : textLen > 58 ? 'tl' : ''}"><span>${text}</span></div>
         ${o.flavor !== false && d.flavor ? `<div class="c-flavor">${U.esc(d.flavor)}</div>` : ''}
         <div class="c-gem" title="${d.rarity}"></div>
       </div>

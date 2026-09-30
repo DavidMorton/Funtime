@@ -9,6 +9,7 @@ window.PZ = window.PZ || {};
   // ---------- Top bar ----------
   PZ.renderTopBar = () => {
     const bar = U.$('#topbar'); const run = R();
+    if (PZ.G.screen !== 'combat') { const co = U.$('.coach'); if (co) co.remove(); U.$$('.coach-focus').forEach(el => el.classList.remove('coach-focus')); }
     if (!run || PZ.G.screen === 'title') { bar.classList.remove('show'); bar.innerHTML = ''; return; }
     bar.classList.add('show');
     const hpPct = run.hp / run.maxHp;
@@ -22,6 +23,8 @@ window.PZ = window.PZ || {};
         <span class="tb-stat" data-tip="Measured depth · ${U.esc(PZ.ACTS[run.act].name)}">⛏️ ${U.fmt(depth)} ft</span>
       </div>
       <div class="relic-bar">${run.relics.map(id => PZ.renderRelic(id)).join('')}</div>
+      <div class="snack-bar">${[0, 1, 2].map(i => { const id = (run.snacks || [])[i]; const sn = id && PZ.SNACKS[id];
+        return sn ? `<button class="snack" onclick="PZ.snackMenu(${i})" data-tip="<b>${sn.name}</b><br>${U.esc(sn.text)}">${sn.art}</button>` : '<span class="snack empty" data-tip="Empty snack slot. Snacks drop after fights and sell at the store."></span>'; }).join('')}</div>
       <div class="tb-right">
         <button class="tb-btn" onclick="PZ.viewCards(PZ.G.run.deck, 'Your Deck', PZ.G.run.deck.length + ' cards')" data-tip="View your deck">🃏 <b>${run.deck.length}</b></button>
         <button class="tb-btn" onclick="PZ.toggleMusic()" data-tip="Ambient jazz on/off">${PZ.audio.musicOn ? '🎵' : '🔇'}</button>
@@ -77,7 +80,7 @@ window.PZ = window.PZ || {};
         </div>
         <div class="title-stats">
           <span>Descents <b>${p.runs}</b></span><span>Reached the Pay Zone <b>${p.wins}</b></span>
-          <span>Foes reconciled <b>${p.reconciledTotal}</b></span><span>Best Grace <b>${p.bestGrace}</b></span>
+          <span>Foes reconciled <b>${p.reconciledTotal}</b></span><span>Best Grace <b>${p.bestGrace}</b></span><span>Stickers <b>${Object.keys(p.stickers).length}/${Object.keys(PZ.STICKERS).length}</b></span>
         </div>
       </div>
       <div class="title-foot">Made for David · Pearland, Texas · ${new Date().getFullYear()}</div>
@@ -115,9 +118,11 @@ window.PZ = window.PZ || {};
       <div class="eyebrow">Before you go down</div>
       <h1>Who's riding along?</h1>
       <p class="sub">Pick a companion. They stay with you the whole descent.</p>
+      ${PZ.profile.maxPressure > 0 ? `<div class="pressure-pick"><span>Well pressure:</span>${PZ.PRESSURE.slice(0, PZ.profile.maxPressure + 1).map((p, i) =>
+        `<button class="chip-btn ${(PZ.G.pressure || 0) === i ? 'on' : ''}" onclick="PZ.G.pressure=${i}; PZ.showCompanionSelect()" data-tip="${U.esc(p.desc)}">${p.name}</button>`).join('')}</div>` : ''}
       <div class="companions">${PZ.COMPANIONS.map(id => {
         const r = PZ.RELICS[id];
-        return `<button class="companion" onclick="PZ.startRun('${id}')">
+        return `<button class="companion" onclick="PZ.startRun('${id}')">${PZ.profile.petWins[id] ? '<span class="pet-win" data-tip="Won a descent together">🏆</span>' : ''}
           <div class="comp-art">${r.art}</div>
           <h2>${r.name}</h2><p>${U.esc(r.text)}</p>
         </button>`;
@@ -129,17 +134,37 @@ window.PZ = window.PZ || {};
   PZ.startRun = companion => {
     PZ.audio.init();
     const starter = ['drill_bit', 'drill_bit', 'drill_bit', 'chain_stitch', 'chain_stitch', 'chain_stitch', 'gentle_word', 'gentle_word', 'photon', 'folk_song'];
+    const pressure = Math.min(PZ.G.pressure || 0, PZ.profile.maxPressure);
+    const hp = pressure >= 3 ? 60 : 70;
     PZ.G.run = {
-      name: 'David', hp: 70, maxHp: 70, gold: 99, act: 0, floor: 0, pos: null, companion,
+      name: 'David', hp, maxHp: hp, gold: 99, act: 0, floor: 0, pos: null, companion, pressure, snacks: ['kolache'],
       deck: starter.map(id => PZ.inst(id)), relics: [companion], map: PZ.genMap(), fightsThisAct: 0, lastEnc: null,
       seenEvents: [], removeCost: 75, startedAt: Date.now(),
       stats: { plugged: 0, reconciled: 0, damage: 0, harmony: 0, cardsPlayed: 0, damageTaken: 0, elites: 0, bosses: 0, bossReconciled: 0 },
     };
     starter.forEach(id => PZ.binderRegister(id));
     PZ.profile.runs++; PZ.saveProfile();
+    if (PZ.profile.runs === 1 && !PZ.fast) return showIntro(companion);
     PZ.showMap();
     PZ.toast(`${PZ.RELICS[companion].art} ${PZ.RELICS[companion].name} hops in the truck.`);
   };
+
+  function showIntro(companion) {
+    PZ.G.screen = 'intro';
+    const pet = PZ.RELICS[companion];
+    $screen().innerHTML = `<div class="screen-act intro">
+      <div class="eyebrow">Spud date</div>
+      <h1>Pearland, Texas. 5:40 A.M.</h1>
+      <div class="intro-text">
+        <p>You used to design wells. Now you design data platforms. Today, somehow, you are doing both.</p>
+        <p>A rig is waiting on the edge of town. Under it lie three layers of trouble: soft sediments, a salt dome, and the pay zone. Every layer has hazards. Some of them are just scared.</p>
+        <p>You can drill through them. Or you can make peace with them. The deck in your truck can do either.</p>
+        <p>${pet.art} ${U.esc(pet.name)} is already in the passenger seat.</p>
+      </div>
+      <button class="btn big" onclick="PZ.showMap()">Spud in ↓</button>
+    </div>`;
+    PZ.renderTopBar();
+  }
 
   PZ.continueRun = () => {
     PZ.audio.init();
@@ -167,7 +192,9 @@ window.PZ = window.PZ || {};
     const pool = PZ.COMMON_RELICS.filter(id => !R().relics.includes(id));
     return pool.length ? U.pick(pool) : null;
   };
-  function gainGold(n) { R().gold += n; if (n > 0) PZ.audio.sfx('coin'); PZ.renderTopBar(); }
+  function gainGold(n) { R().gold += n; if (n > 0) PZ.audio.sfx('coin'); if (R().gold >= 300) PZ.award('hoarder'); PZ.renderTopBar(); }
+  PZ.addSnack = id => { const run = R(); run.snacks = run.snacks || []; if (run.snacks.length >= 3) { PZ.toast('Your snack slots are full.'); return false; } run.snacks.push(id); PZ.renderTopBar(); return true; };
+  PZ.randomSnackId = () => U.pick(Object.keys(PZ.SNACKS));
   function heal(n) { const run = R(); const before = run.hp; run.hp = Math.min(run.maxHp, run.hp + n); if (run.hp > before) PZ.audio.sfx('heal'); PZ.renderTopBar(); return run.hp - before; }
 
   // ---------- Rewards ----------
@@ -181,14 +208,15 @@ window.PZ = window.PZ || {};
     const healed = heal(recon.length * 3 + (PZ.hasRelic('skimmer') ? 5 : 0));
     gainGold(gold);
     if (c.kind === 'elite') run.stats.elites++;
-    if (c.kind === 'boss') { run.stats.bosses++; if (recon.length) { run.stats.bossReconciled++; if (run.act === 2) run.stats.finalReconciled = true; } }
+    if (c.kind === 'boss') { PZ.award(run.act === 0 ? 'act1' : run.act === 1 ? 'act2' : 'win'); run.stats.bosses++; if (recon.length) { run.stats.bossReconciled++; if (run.act === 2) run.stats.finalReconciled = true; } }
     const nChoices = 3 + (PZ.hasRelic('buffet') ? 1 : 0);
     const reward = {
       kind: c.kind, gold, healed, plugged: plugged.length, recon: recon.length,
       cards: PZ.cardChoices(nChoices, c.kind !== 'battle').map(id => PZ.inst(id, false, Math.random() < 0.06)),
       allies: recon.filter(e => e.elite || e.boss || Math.random() < 0.5).map(e => ({ from: e.name, art: e.art, inst: PZ.inst(PZ.ENEMIES[e.id].ally) })),
       relic: c.kind === 'elite' ? PZ.randomRelicId() : null,
-      cardTaken: false, relicTaken: false,
+      snack: c.kind !== 'battle' || Math.random() < 0.4 ? PZ.randomSnackId() : null,
+      cardTaken: false, relicTaken: false, snackTaken: false,
     };
     PZ.G.combat = null;
     PZ.G.reward = reward;
@@ -215,6 +243,9 @@ window.PZ = window.PZ || {};
           ${PZ.renderCard(a.inst)}
           ${a.taken ? '<div class="taken-label">Joined!</div>' : `<button class="btn" onclick="PZ.takeAlly(${i})">Welcome them</button>`}
         </div>`).join('')}</div></section>` : ''}
+      ${rw.snack ? `<section class="reward-block"><h2>🍴 Snack</h2>
+        <div class="relic-offer ${rw.snackTaken ? 'taken' : ''}"><div class="relic big">${PZ.SNACKS[rw.snack].art}</div><div><b>${PZ.SNACKS[rw.snack].name}</b><p>${U.esc(PZ.SNACKS[rw.snack].text)}</p></div>
+        ${rw.snackTaken ? '<span class="taken-label">Packed</span>' : '<button class="btn" onclick="PZ.takeRewardSnack()">Pack it</button>'}</div></section>` : ''}
       ${rw.relic ? `<section class="reward-block"><h2>🎁 Keepsake</h2>
         <div class="relic-offer ${rw.relicTaken ? 'taken' : ''}">${PZ.renderRelic(rw.relic, 'big')}<div><b>${PZ.RELICS[rw.relic].name}</b><p>${U.esc(PZ.RELICS[rw.relic].text)}</p></div>
         ${rw.relicTaken ? '<span class="taken-label">Taken</span>' : '<button class="btn" onclick="PZ.takeRewardRelic()">Take</button>'}</div></section>` : ''}
@@ -236,8 +267,9 @@ window.PZ = window.PZ || {};
   };
   PZ.takeAlly = i => {
     const a = PZ.G.reward.allies[i]; if (a.taken) return;
-    a.taken = true; PZ.addToDeck(a.inst.id); PZ.audio.sfx('reconcile'); renderRewards();
+    a.taken = true; PZ.addToDeck(a.inst.id); PZ.audio.sfx('reconcile'); PZ.award('ally'); renderRewards();
   };
+  PZ.takeRewardSnack = () => { const rw = PZ.G.reward; if (rw.snackTaken) return; if (PZ.addSnack(rw.snack)) { rw.snackTaken = true; PZ.audio.sfx('click'); renderRewards(); } };
   PZ.takeRewardRelic = () => { const rw = PZ.G.reward; if (rw.relicTaken) return; rw.relicTaken = true; PZ.addRelic(rw.relic); renderRewards(); };
   PZ.leaveRewards = () => {
     const rw = PZ.G.reward; PZ.G.reward = null;
@@ -340,7 +372,8 @@ window.PZ = window.PZ || {};
       { name: 'Wellsite Booster', fams: ['drill', 'craft'], art: '🛠️', price: 85, sold: false, cls: 'pack-a' },
       { name: 'Lakehouse & Hymn Booster', fams: ['lake', 'hymn'], art: '🎼', price: 85, sold: false, cls: 'pack-b' },
     ];
-    PZ.G.shop = { singles, relics, packs, removed: false };
+    const snacks = U.shuffle(Object.keys(PZ.SNACKS)).slice(0, 2).map(id => ({ id, price: U.rand(35, 55), sold: false }));
+    PZ.G.shop = { singles, relics, packs, snacks, removed: false };
     PZ.G.screen = 'shop';
     renderShop('Welcome in. Friday night is Commander. Sleeves are in the back.');
   };
@@ -369,6 +402,9 @@ window.PZ = window.PZ || {};
           ${r.sold ? '<div class="price sold">Sold</div>' : `<button class="price ${can(r.price) ? '' : 'cant'}" onclick="PZ.buyRelic(${i})">💰 ${r.price}</button>`}</div>`).join('') || '<p class="hint">Sold out.</p>'}
           ${!PZ.hasRelic('binder') ? `<div class="shop-item relic-item ${s.binderSold ? 'sold' : ''}">${PZ.renderRelic('binder', 'big')}<div class="relic-name">Nine-Pocket Binder</div>${s.binderSold ? '<div class="price sold">Sold</div>' : `<button class="price ${can(90) ? '' : 'cant'}" onclick="PZ.buyBinder()">💰 90</button>`}</div>` : ''}
           </div></section>
+        <section><h2>Snack Counter</h2><div class="relic-shelf">${s.snacks.map((it, i) => `
+          <div class="shop-item relic-item ${it.sold ? 'sold' : ''}"><div class="relic big" data-tip="${U.esc(PZ.SNACKS[it.id].text)}">${PZ.SNACKS[it.id].art}</div><div class="relic-name">${PZ.SNACKS[it.id].name}</div>
+          ${it.sold ? '<div class="price sold">Sold</div>' : `<button class="price ${can(it.price) ? '' : 'cant'}" onclick="PZ.buySnack(${i})">💰 ${it.price}</button>`}</div>`).join('')}</div></section>
         <section><h2>Trade-In Counter</h2><div class="service">
           <p>Trade a card away for good.</p>
           ${s.removed ? '<div class="price sold">Done</div>' : `<button class="price ${can(run.removeCost) ? '' : 'cant'}" onclick="PZ.buyRemove()">💰 ${run.removeCost}</button>`}
@@ -380,6 +416,7 @@ window.PZ = window.PZ || {};
   }
   function pay(n) { const run = R(); if (run.gold < n) { PZ.toast('Not enough gold.'); PZ.audio.sfx('click'); return false; } run.gold -= n; PZ.audio.sfx('coin'); return true; }
   PZ.buySingle = i => { const it = PZ.G.shop.singles[i]; if (it.sold || !pay(it.price)) return; it.sold = true; PZ.addToDeck(it.inst.id, false, it.inst.foil); renderShop(U.pick(['Good pull.', 'That one sees a lot of play.', 'Nice. Want a top-loader for it?'])); };
+  PZ.buySnack = i => { const it = PZ.G.shop.snacks[i]; if (it.sold) return; if ((R().snacks || []).length >= 3) { PZ.toast('Your snack slots are full.'); return; } if (!pay(it.price)) return; it.sold = true; PZ.addSnack(it.id); renderShop('Fresh this morning.'); };
   PZ.buyRelic = i => { const it = PZ.G.shop.relics[i]; if (it.sold || !pay(it.price)) return; it.sold = true; PZ.addRelic(it.id); renderShop('That one has a story. Enjoy it.'); };
   PZ.buyBinder = () => { const s = PZ.G.shop; if (s.binderSold || !pay(90)) return; s.binderSold = true; PZ.addRelic('binder'); renderShop('Nine pockets. Side-loading. You have taste.'); };
   PZ.buyRemove = () => {
@@ -437,6 +474,8 @@ window.PZ = window.PZ || {};
       p.torn = true;
       p.newIds = p.cards.filter(c => !PZ.binder[c.id]).map(c => c.id);
       p.cards.forEach(c => PZ.binderRegister(c.id, c.foil));
+      if (p.cards.some(c => c.foil)) PZ.award('foil');
+      if (p.cards.some(c => PZ.def(c).rarity === 'rare')) PZ.award('rare_pull');
       renderPack();
     }, PZ.fast ? 0 : 550);
   };
@@ -562,6 +601,11 @@ window.PZ = window.PZ || {};
         <div><div class="eyebrow">Collection</div><h1>Your Binder</h1></div>
         <div class="binder-stats"><div class="meter"><div style="width:${pct}%"></div></div><b>${owned}/${all.length}</b> collected · <b>${foils}</b> foil</div>
       </div>
+      <section class="binder-page stickers-page"><h2>⛑️ Hard Hat Stickers <small>${Object.keys(PZ.profile.stickers).length}/${Object.keys(PZ.STICKERS).length}</small></h2>
+        <div class="sticker-grid">${Object.entries(PZ.STICKERS).map(([id, st]) => {
+          const got = PZ.profile.stickers[id];
+          return `<div class="sticker ${got ? 'got' : ''}" data-tip="<b>${U.esc(st.name)}</b><br>${U.esc(st.desc)}${got ? '<br><i>Earned ' + got + '</i>' : ''}"><span>${got ? st.art : '?'}</span><small>${got ? U.esc(st.name) : '???'}</small></div>`;
+        }).join('')}</div></section>
       ${fams.map(f => {
         const cards = all.filter(c => c.fam === f);
         return `<section class="binder-page"><h2><span class="chip fam-${f}">${PZ.FAMILIES[f].name}</span> <small>${cards.filter(c => PZ.binder[c.id]).length}/${cards.length} · ${PZ.FAMILIES[f].desc}${f === 'ally' ? ' Earn them by reconciling.' : ''}</small></h2>
@@ -587,6 +631,16 @@ window.PZ = window.PZ || {};
     p.bestGrace = Math.max(p.bestGrace, grace);
     const infinite = won && !!s.finalReconciled;
     if (infinite) p.infiniteEndings = (p.infiniteEndings || 0) + 1;
+    let unlocked = false;
+    if (won) {
+      if (infinite) PZ.award('infinite');
+      if (s.plugged === 0) PZ.award('pacifist');
+      if (s.reconciled === 0) PZ.award('finite');
+      if ((run.pressure || 0) >= 1) PZ.award('pressure');
+      p.petWins[run.companion] = (p.petWins[run.companion] || 0) + 1;
+      if (PZ.COMPANIONS.every(id => p.petWins[id])) PZ.award('pets');
+      if ((run.pressure || 0) >= p.maxPressure && p.maxPressure < PZ.PRESSURE.length - 1) { p.maxPressure++; unlocked = true; }
+    }
     PZ.saveProfile(); PZ.clearRun();
     PZ.audio.mood(won ? 'victory' : 'calm');
     if (!won) PZ.audio.sfx('lose');
@@ -609,6 +663,7 @@ window.PZ = window.PZ || {};
         <div><b>${s.cardsPlayed}</b><span>Cards played</span></div>
         <div class="grace"><b>${grace}</b><span>Grace</span></div>
       </div>
+      ${unlocked ? `<p class="unlock">🌡️ New difficulty unlocked: <b>${PZ.PRESSURE[p.maxPressure].name}</b>. ${U.esc(PZ.PRESSURE[p.maxPressure].desc)}</p>` : ''}
       <p class="hint">Grace = 10 per reconciled foe, 50 per reconciled boss, 100 for reaching the Pay Zone, and 2 per floor.</p>
       <div class="title-buttons"><button class="btn big" onclick="PZ.showCompanionSelect()">Drill again</button><button class="btn ghost" onclick="PZ.showTitle()">Title</button></div>
     </div>`;

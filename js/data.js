@@ -298,8 +298,8 @@ window.PZ = window.PZ || {};
     moves: [{ acts: [{ block: 20 }] }, { acts: [atk(22)] }, { acts: [atk(8, 3)] }, { acts: [{ self: { Torque: 3 } }], label: 'Nightly batch' }] });
   enemy('scope_creep', { name: 'Scope Creep', art: '📋', hp: [94, 98], unrest: 68, ally: 'a_scope', ai: 'cycle', elite: true,
     moves: [{ acts: [atk(10), { self: { Torque: 2 } }], label: '"One small thing…"' }, { acts: [atk(10), { self: { Torque: 2 } }], label: '"While you\'re in there…"' }, { acts: [{ junk: 'invoice', n: 2, to: 'discard' }] }] });
-  enemy('blowout', { name: 'The Blowout', art: '🌋', hp: [185, 185], unrest: 135, ally: 'a_blowout', ai: 'cycle', boss: true,
-    moves: [{ acts: [atk(10, 2)] }, { acts: [{ block: 20 }, { self: { Torque: 3 } }], label: 'Pressure builds' }, { acts: [atk(30)], label: 'GUSH' },
+  enemy('blowout', { name: 'The Blowout', art: '🌋', hp: [175, 175], unrest: 128, ally: 'a_blowout', ai: 'cycle', boss: true,
+    moves: [{ acts: [atk(10, 2)] }, { acts: [{ block: 18 }, { self: { Torque: 2 } }], label: 'Pressure builds' }, { acts: [atk(28)], label: 'GUSH' },
       { acts: [{ junk: 'sour', n: 2, to: 'discard' }, atk(6)] }, { acts: [{ player: { Exposed: 2, Weak: 2 } }], label: 'Kick!' }] });
 
   // ACT 3 — The Pay Zone
@@ -317,8 +317,8 @@ window.PZ = window.PZ || {};
     moves: [{ acts: [atk(12, 2)] }, { acts: [{ player: { Weak: 2, Drained: 1 } }, atk(6)], label: 'One more late night' }, { acts: [atk(30)] }] });
   enemy('quarterly', { name: 'The Quarterly Number', art: '📉', hp: [158, 162], unrest: 108, ally: 'a_quarterly', ai: 'cycle', elite: true,
     moves: [{ acts: [atk(25)] }, { acts: [{ block: 25 }, { self: { Torque: 4 } }], label: 'Forecast call' }, { acts: [atk(9, 3)] }] });
-  enemy('finite_game', { name: 'The Finite Game', art: '♟️', hp: [300, 300], unrest: 215, ally: 'a_finite', ai: 'cycle', boss: true,
-    moves: [{ acts: [atk(14, 2)] }, { acts: [{ self: { Torque: 4 } }, { block: 25 }], label: 'Raises the stakes' }, { acts: [atk(44)], label: 'Winner takes all' },
+  enemy('finite_game', { name: 'The Finite Game', art: '♟️', hp: [280, 280], unrest: 195, ally: 'a_finite', ai: 'cycle', boss: true,
+    moves: [{ acts: [atk(14, 2)] }, { acts: [{ self: { Torque: 4 } }, { block: 25 }], label: 'Raises the stakes' }, { acts: [atk(40)], label: 'Winner takes all' },
       { acts: [{ junk: 'second_guess', n: 3, to: 'draw' }, { player: { Weak: 2, Exposed: 2 } }], label: 'Sets the rules' }, { acts: [atk(10, 3)] }] });
 
   PZ.ENEMIES = E;
@@ -473,6 +473,49 @@ window.PZ = window.PZ || {};
         { label: 'Order more data', desc: 'Pay 25 gold. Gain an upgraded Photon Query.', cond: a => a.hasGold(25), run: a => { a.gold(-25); a.addCard('photon', true); return 'Better data. Better decisions. Slightly smaller budget.'; } },
         { label: 'Pass on it', desc: 'Nothing happens.', run: a => 'Someone else drills it. You read about it later. You feel fine.' },
       ] },
+  ];
+
+
+  // ---------- Snacks (one-use items) ----------
+  PZ.SNACKS = {
+    kolache: { name: 'Kolache', art: '🥐', text: 'Heal 12 HP. Works anywhere.', anywhere: true },
+    cold_brew: { name: 'Cold Brew', art: '🧋', text: 'Gain 2 Energy.' },
+    sweet_tea: { name: 'Sweet Tea', art: '🥤', text: 'Draw 3 cards.' },
+    crawfish: { name: 'Crawfish Boil', art: '🦞', text: 'Deal 10 damage to ALL enemies.' },
+    cobbler: { name: 'Peach Cobbler', art: '🥧', text: 'Apply 10 Harmony to ALL enemies. Nobody fights over cobbler.' },
+    taco: { name: 'Breakfast Taco', art: '🌮', text: 'Gain 14 Block.' },
+    brisket_snack: { name: 'Brisket Plate', art: '🍖', text: 'Gain 2 Torque for this combat.' },
+  };
+
+  // ---------- Hard Hat Stickers (achievements) ----------
+  PZ.STICKERS = {
+    first_plug: { name: 'Plug & Abandon', art: '🔩', desc: 'Plug your first hazard.' },
+    first_recon: { name: 'Peacemaker', art: '🕊️', desc: 'Reconcile your first foe.' },
+    ally: { name: 'New Crew Member', art: '🤝', desc: 'Welcome an ally into your deck.' },
+    triple: { name: 'Group Hug', art: '🫂', desc: 'Reconcile 3 foes in one fight.' },
+    boss_recon: { name: 'Love Your Enemies', art: '💛', desc: 'Reconcile a boss.' },
+    big_hit: { name: 'Gusher', art: '⛲', desc: 'Deal 30 or more damage in a single hit.' },
+    act1: { name: 'Through the Sediments', art: '🟫', desc: 'Beat Act 1.' },
+    act2: { name: 'Salt Breaker', art: '🧂', desc: 'Beat Act 2.' },
+    win: { name: 'Pay Zone', art: '🛢️', desc: 'Reach the Pay Zone.' },
+    infinite: { name: 'Infinite Player', art: '♾️', desc: 'Reach the Infinite Game ending.' },
+    pacifist: { name: 'Blessed', art: '😇', desc: 'Reach the Pay Zone without plugging anything.' },
+    finite: { name: 'Finite Player', art: '🏆', desc: 'Reach the Pay Zone without reconciling anyone.' },
+    foil: { name: 'Shiny!', art: '✨', desc: 'Pull a foil card from a booster pack.' },
+    rare_pull: { name: 'Big Pull', art: '💎', desc: 'Pull a rare card from a booster pack.' },
+    hoarder: { name: 'Dragon Hoard', art: '💰', desc: 'Hold 300 gold at once.' },
+    binder50: { name: 'Half a Binder', art: '📒', desc: 'Collect half of all cards.' },
+    binder100: { name: 'Completionist', art: '🏅', desc: 'Collect every card.' },
+    pressure: { name: 'Under Pressure', art: '🌡️', desc: 'Win a descent at Pressure 1 or higher.' },
+    pets: { name: 'Whole Family', art: '🐾', desc: 'Win once with each companion.' },
+    snack: { name: 'Snack Break', art: '🥐', desc: 'Eat a snack in the middle of a fight.' },
+  };
+
+  PZ.PRESSURE = [
+    { name: 'Normal', desc: 'The standard descent.' },
+    { name: 'Pressure 1', desc: 'Enemies have 12% more Health and Unrest.' },
+    { name: 'Pressure 2', desc: 'Also: enemies hit 15% harder.' },
+    { name: 'Pressure 3', desc: 'Also: you start with 60 Max HP.' },
   ];
 
   PZ.NODE_TYPES = {

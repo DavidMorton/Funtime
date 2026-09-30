@@ -16,8 +16,9 @@ window.PZ = window.PZ || {};
     const run = R();
     const enemies = enemyIds.map((id, i) => {
       const d = PZ.ENEMIES[id];
-      const hp = U.rand(d.hp[0], d.hp[1]);
-      const unrest = Math.round(d.unrest * (0.92 + Math.random() * 0.16));
+      const pmul = (run.pressure || 0) >= 1 ? 1.12 : 1;
+      const hp = Math.round(U.rand(d.hp[0], d.hp[1]) * pmul);
+      const unrest = Math.round(d.unrest * (1.04 + Math.random() * 0.14) * pmul);
       const start = d.ai === 'cycle' && !d.elite && !d.boss ? U.rand(0, d.moves.length - 1) : 0;
       const e = { uid: U.uid(), id, name: d.name, art: d.art, hp, maxHp: hp, unrest, maxUnrest: unrest, block: 0, st: {}, state: 'alive', queue: [start], elite: !!d.elite, boss: !!d.boss };
       e.queue.push(nextMove(e, start));
@@ -30,6 +31,7 @@ window.PZ = window.PZ || {};
     PZ.audio.mood(kind === 'boss' ? 'boss' : 'combat');
     layout();
     startTurn();
+    PZ.maybeCoach();
   };
 
   function nextMove(e, cur) {
@@ -50,6 +52,11 @@ window.PZ = window.PZ || {};
     if (atkSt.Weak) v = Math.floor(v * 0.75);
     if (defSt && defSt.Exposed) v = Math.floor(v * 1.5);
     return Math.max(0, v);
+  }
+  function enemyAtk(base, e) {
+    let v = atkValue(base, e.st, C().st);
+    if ((R().pressure || 0) >= 2) v = Math.floor(v * 1.15);
+    return v;
   }
   function harmValue(base, target) {
     let v = base + (C().st.Flow || 0);
@@ -126,6 +133,7 @@ window.PZ = window.PZ || {};
     e.hp -= dmg;
     R().stats.damage += dmg;
     const el = enemyEl(e);
+    if (dmg >= 30) PZ.award('big_hit');
     if (dmg > 0) { PZ.floatAt(el, '-' + dmg, 'dmg'); PZ.audio.sfx(dmg >= 15 ? 'bighit' : 'hit'); fxQueue.push({ euid: e.uid, cls: 'hurt' }); }
     else { PZ.floatAt(el, 'Blocked', 'blocked'); PZ.audio.sfx('block'); }
     if (e.hp <= 0) plug(e);
@@ -146,11 +154,15 @@ window.PZ = window.PZ || {};
     e.hp = 0; e.state = 'plugged'; e.block = 0;
     R().stats.plugged++;
     PZ.audio.sfx('plug');
+    PZ.award('first_plug');
   }
   function reconcile(e) {
     e.unrest = 0; e.state = 'reconciled'; e.block = 0;
     R().stats.reconciled++;
     PZ.audio.sfx('reconcile');
+    PZ.award('first_recon');
+    if (e.boss) PZ.award('boss_recon');
+    if (C().enemies.filter(x => x.state === 'reconciled').length >= 3) PZ.award('triple');
     if (PZ.hasRelic('guinea')) { heal(5); bumpPet(); }
   }
   function bumpPet() { fxQueue.push({ el: '.pet', cls: 'bounce' }); }
@@ -216,7 +228,7 @@ window.PZ = window.PZ || {};
       for (const a of move.acts) {
         if (a.atk != null) {
           for (let h = 0; h < (a.hits || 1); h++) {
-            takeDamage(atkValue(a.atk, e.st, c.st));
+            takeDamage(enemyAtk(a.atk, e));
             render();
             if (R().hp <= 0) { checkDeath(); return; }
             await U.sleep(a.hits > 1 ? 180 : 250);
@@ -372,6 +384,68 @@ window.PZ = window.PZ || {};
     }
   }
 
+  // ---------- Snacks ----------
+  PZ.useSnack = i => {
+    const run = R(); const id = run.snacks[i]; if (!id) return;
+    const sn = PZ.SNACKS[id]; const c = C();
+    const inCombat = PZ.G.screen === 'combat' && c && !c.over;
+    if (!inCombat && !sn.anywhere) { PZ.toast(`Save the ${sn.name} for a fight.`); return; }
+    if (inCombat && PZ.G.busy) return;
+    run.snacks.splice(i, 1);
+    PZ.closeModal();
+    PZ.audio.sfx('heal');
+    if (!inCombat) { const before = run.hp; run.hp = Math.min(run.maxHp, run.hp + 12); PZ.toast(`${sn.art} ${sn.name}: +${run.hp - before} HP`); PZ.renderTopBar(); return; }
+    PZ.award('snack');
+    switch (id) {
+      case 'kolache': heal(12); break;
+      case 'cold_brew': c.energy += 2; break;
+      case 'sweet_tea': drawCards(3); break;
+      case 'crawfish': alive().forEach(e => dealDamage(e, 10)); break;
+      case 'cobbler': alive().forEach(e => applyHarm(e, 10)); break;
+      case 'taco': gainBlock(14, false); break;
+      case 'brisket_snack': addStatus(c.st, { Torque: 2 }); break;
+    }
+    PZ.toast(`${sn.art} ${sn.name}!`);
+    render();
+    checkEnd();
+  };
+  PZ.snackMenu = i => {
+    const run = R(); const id = run.snacks[i]; if (!id) return;
+    const sn = PZ.SNACKS[id];
+    const usable = sn.anywhere || (PZ.G.screen === 'combat' && C() && !C().over);
+    PZ.modal(`<div class="snack-modal"><div class="snack-art">${sn.art}</div><h2 class="modal-title">${sn.name}</h2><p class="modal-sub">${U.esc(sn.text)}</p>
+      <div class="modal-actions"><button class="btn" ${usable ? '' : 'disabled'} onclick="PZ.useSnack(${i})">${usable ? 'Eat it' : 'Only in a fight'}</button>
+      <button class="btn ghost" onclick="PZ.G.run.snacks.splice(${i},1); PZ.closeModal(); PZ.renderTopBar(); PZ.renderCombat && PZ.renderCombat()">Toss it</button></div></div>`);
+  };
+
+  // ---------- First-fight coach marks ----------
+  const COACH = [
+    { sel: '#hand', text: 'These are your cards. The number in the orange circle is the Energy it costs. Click a card to play it.' },
+    { sel: '#energy', text: 'This is your Energy. You get it back every turn.' },
+    { sel: '.enemy', text: 'Red is Health. Empty it to <b>Plug</b> the hazard. Purple is Unrest. Empty it with Harmony to <b>Reconcile</b>. Either one wins.' },
+    { sel: '.intents', text: 'This shows what the enemy will do next. ⚔️ is an attack. Play Block cards to soak it up.' },
+    { sel: '#endturn', text: 'When you run out of Energy or good plays, end your turn. Have fun down there.' },
+  ];
+  function coach(step) {
+    const old = U.$('.coach'); if (old) old.remove();
+    U.$$('.coach-focus').forEach(el => el.classList.remove('coach-focus'));
+    if (step >= COACH.length) { PZ.profile.tutorialDone = true; PZ.saveProfile(); return; }
+    const c = COACH[step]; const target = document.querySelector(c.sel);
+    if (!target) return coach(step + 1);
+    target.classList.add('coach-focus');
+    const box = document.createElement('div'); box.className = 'coach';
+    box.innerHTML = `<p>${c.text}</p><div class="coach-row"><small>${step + 1} / ${COACH.length}</small><span><button class="btn ghost" data-skip>Skip</button> <button class="btn" data-next>${step === COACH.length - 1 ? 'Got it' : 'Next'}</button></span></div>`;
+    document.body.appendChild(box);
+    const r = target.getBoundingClientRect();
+    const bw = box.offsetWidth, bh = box.offsetHeight;
+    let top = r.top - bh - 14; if (top < 64) top = r.bottom + 14;
+    box.style.left = U.clamp(r.left + r.width / 2 - bw / 2, 12, window.innerWidth - bw - 12) + 'px';
+    box.style.top = U.clamp(top, 64, window.innerHeight - bh - 12) + 'px';
+    box.querySelector('[data-next]').onclick = e => { e.stopPropagation(); coach(step + 1); };
+    box.querySelector('[data-skip]').onclick = e => { e.stopPropagation(); coach(COACH.length); };
+  }
+  PZ.maybeCoach = () => { if (!PZ.profile.tutorialDone && !PZ.fast) setTimeout(() => coach(0), 700); };
+
   // ---------- Rendering ----------
   function layout() {
     U.$('#screen').innerHTML = `<div id="combat" class="screen-combat">
@@ -417,7 +491,7 @@ window.PZ = window.PZ || {};
     const blurry = PZ.hasRelic('monovision');
     move.acts.forEach(a => {
       if (a.atk != null) {
-        const v = atkValue(a.atk, e.st, c.st);
+        const v = enemyAtk(a.atk, e);
         parts.push(`<span class="i-atk">⚔️<b class="${blurry ? 'blurry' : ''}">${v}${a.hits > 1 ? '×' + a.hits : ''}</b></span>`);
         tips.push(`Attack for ${v}${a.hits > 1 ? ' × ' + a.hits : ''}`);
       } else if (a.block) { parts.push('<span>🛡️</span>'); tips.push(`Gain ${a.block} Block`); }
